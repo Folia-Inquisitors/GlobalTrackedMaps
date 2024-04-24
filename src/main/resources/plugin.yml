@@ -1,0 +1,7 @@
+name: GlobalTrackedMaps
+version: '1.1.0'
+main: com.loohp.globaltrackedmaps.GlobalTrackedMaps
+api-version: 1.19
+folia-supported: true
+authors: [ LOOHP ]
+description: Track players on map globally
