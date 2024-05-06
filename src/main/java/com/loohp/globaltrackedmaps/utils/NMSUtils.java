@@ -4,7 +4,7 @@ import org.bukkit.Bukkit;
 
 public class NMSUtils {
     public static Class<?> getNMSClass(String path, String... paths) throws ClassNotFoundException {
-        String version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
+        String version = Bukkit.getServer().getClass().getPackage().getName().substring(Bukkit.getServer().getClass().getPackage().getName().lastIndexOf('.') + 1);
         ClassNotFoundException error = null;
         try {
             return Class.forName(path.replace("%s", version));
