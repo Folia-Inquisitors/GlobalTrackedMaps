@@ -18,6 +18,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import static com.loohp.globaltrackedmaps.utils.NMSUtils.isRelocated;
+
 public class MapUtils {
     private static Class<?> craftMapRendererClass;
 
@@ -35,12 +37,20 @@ public class MapUtils {
 
     static {
         try {
-            craftMapRendererClass = NMSUtils.getNMSClass("org.bukkit.craftbukkit.%s.map.CraftMapRenderer");
-            craftMapViewClass = NMSUtils.getNMSClass("org.bukkit.craftbukkit.%s.map.CraftMapView");
+            craftMapRendererClass = (isRelocated())
+                    ? NMSUtils.getNMSClass("org.bukkit.craftbukkit.map.CraftMapRenderer")
+                    : NMSUtils.getNMSClass("org.bukkit.craftbukkit.%s.map.CraftMapRenderer");
+            craftMapViewClass = (isRelocated())
+                    ? NMSUtils.getNMSClass("org.bukkit.craftbukkit.map.CraftMapView")
+                    : NMSUtils.getNMSClass("org.bukkit.craftbukkit.%s.map.CraftMapView");
             craftMapViewWorldMapField = craftMapViewClass.getDeclaredField("worldMap");
-            nmsWorldMapClass = NMSUtils.getNMSClass("net.minecraft.server.%s.WorldMap", "net.minecraft.world.level.saveddata.maps.WorldMap");
+            nmsWorldMapClass = (isRelocated())
+                    ? NMSUtils.getNMSClass("net.minecraft.server.WorldMap", "net.minecraft.world.level.saveddata.maps.WorldMap")
+                    : NMSUtils.getNMSClass("net.minecraft.server.%s.WorldMap", "net.minecraft.world.level.saveddata.maps.WorldMap");
             nmsWorldMapHumansField = NMSUtils.reflectiveLookup(Field.class, () -> nmsWorldMapClass.getDeclaredField("humans"), () -> nmsWorldMapClass.getDeclaredField("o"));
-            nmsEntityHumanClass = NMSUtils.getNMSClass("net.minecraft.server.%s.EntityHuman", "net.minecraft.world.entity.player.EntityHuman");
+            nmsEntityHumanClass = (isRelocated())
+                    ? NMSUtils.getNMSClass("net.minecraft.server.EntityHuman", "net.minecraft.world.entity.player.EntityHuman")
+                    : NMSUtils.getNMSClass("net.minecraft.server.%s.EntityHuman", "net.minecraft.world.entity.player.EntityHuman");
             nmsEntityHumanGetBukkitEntityMethod = nmsEntityHumanClass.getMethod("getBukkitEntity");
         } catch (ReflectiveOperationException e) {
             e.printStackTrace();

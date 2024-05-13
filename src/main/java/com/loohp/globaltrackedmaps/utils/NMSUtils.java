@@ -3,8 +3,14 @@ package com.loohp.globaltrackedmaps.utils;
 import org.bukkit.Bukkit;
 
 public class NMSUtils {
+
+    public static final boolean IS_FOLIA = isFolia();
+    public static final boolean IS_20_6 = isTwentyDotSix();
+
     public static Class<?> getNMSClass(String path, String... paths) throws ClassNotFoundException {
-        String version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
+        String version = (isRelocated())
+                ? ""
+                : Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
         ClassNotFoundException error = null;
         try {
             return Class.forName(path.replace("%s", version));
@@ -19,6 +25,24 @@ public class NMSUtils {
             }
             throw error;
         }
+    }
+
+    public static boolean isRelocated() {
+        return IS_20_6 && !IS_FOLIA;
+    }
+
+    private static boolean isFolia() {
+        try {
+            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean isTwentyDotSix() {
+        String serverVersion = Bukkit.getVersion();
+        return serverVersion.substring(serverVersion.indexOf(':') + 1).trim().replace(")", "").equals("1.20.6");
     }
 
     @SafeVarargs
