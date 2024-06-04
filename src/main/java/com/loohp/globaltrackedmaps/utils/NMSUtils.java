@@ -2,47 +2,42 @@ package com.loohp.globaltrackedmaps.utils;
 
 import org.bukkit.Bukkit;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class NMSUtils {
+    private static final Pattern VERSION_PATTERN = Pattern.compile("v\\d+_\\d+_R\\d+");
+    private static final boolean IS_MOJMAP;
+    private static final String PACKAGE_VERSION;
 
-    public static final boolean IS_FOLIA = isFolia();
-    public static final boolean IS_20_6 = isTwentyDotSix();
+    static {
+        Matcher matcher = VERSION_PATTERN.matcher(Bukkit.getServer().getClass().getPackage().getName());
+        IS_MOJMAP = !matcher.find();
+        PACKAGE_VERSION = IS_MOJMAP ? "" : matcher.group();
+    }
 
-    public static Class<?> getNMSClass(String path, String... paths) throws ClassNotFoundException {
-        String version = (isRelocated())
-                ? ""
-                : Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
+    public static Class<?> getNMSClass(String... paths) throws ClassNotFoundException {
+        if (paths.length == 0) {
+            throw new IllegalArgumentException("Paths cannot be empty");
+        }
+
         ClassNotFoundException error = null;
-        try {
-            return Class.forName(path.replace("%s", version));
-        } catch (ClassNotFoundException e) {
-            error = e;
-            for (String classpath : paths) {
-                try {
-                    return Class.forName(classpath.replace("%s", version));
-                } catch (ClassNotFoundException classNotFoundException) {
-                    error = classNotFoundException;
+        for (String path : paths) {
+            if (path.contains("%s")) {
+                if (IS_MOJMAP) {
+                    path = path.replace("%s", "").replace("..", ".");
+                } else {
+                    path = path.replace("%s", PACKAGE_VERSION);
                 }
             }
-            throw error;
+
+            try {
+                return Class.forName(path);
+            } catch (ClassNotFoundException e) {
+                error = e;
+            }
         }
-    }
-
-    public static boolean isRelocated() {
-        return IS_20_6 && !IS_FOLIA;
-    }
-
-    private static boolean isFolia() {
-        try {
-            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-        return true;
-    }
-
-    private static boolean isTwentyDotSix() {
-        String serverVersion = Bukkit.getVersion();
-        return serverVersion.substring(serverVersion.indexOf(':') + 1).trim().replace(")", "").equals("1.20.6");
+        throw error;
     }
 
     @SafeVarargs
