@@ -39,13 +39,11 @@ public class MapUtils {
             craftMapViewClass = NMSUtils.getNMSClass("org.bukkit.craftbukkit.%s.map.CraftMapView");
             craftMapViewWorldMapField = craftMapViewClass.getDeclaredField("worldMap");
             nmsWorldMapClass = NMSUtils.getNMSClass("net.minecraft.server.%s.WorldMap", "net.minecraft.world.level.saveddata.maps.WorldMap");
-            System.out.println("NMS World Map Class: " + nmsWorldMapClass.getName());
             nmsWorldMapHumansField = NMSUtils.reflectiveLookup(Field.class,
                     () -> nmsWorldMapClass.getDeclaredField("carriedByPlayers"),
                     () -> nmsWorldMapClass.getDeclaredField("humans"),
                     () -> nmsWorldMapClass.getDeclaredField("o")
             );
-            System.out.println("NMS World Map Humans Field: " + nmsWorldMapHumansField.getName());
             nmsEntityHumanClass = NMSUtils.getNMSClass("net.minecraft.server.%s.EntityHuman", "net.minecraft.world.entity.player.EntityHuman");
             nmsEntityHumanGetBukkitEntityMethod = nmsEntityHumanClass.getMethod("getBukkitEntity");
         } catch (ReflectiveOperationException e) {
