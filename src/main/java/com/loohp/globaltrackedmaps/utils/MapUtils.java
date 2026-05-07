@@ -33,18 +33,20 @@ public class MapUtils {
 
     private static Method nmsEntityHumanGetBukkitEntityMethod;
 
+    private static boolean warnedMissingTrackingField;
+
     static {
         try {
             craftMapRendererClass = NMSUtils.getNMSClass("org.bukkit.craftbukkit.%s.map.CraftMapRenderer");
             craftMapViewClass = NMSUtils.getNMSClass("org.bukkit.craftbukkit.%s.map.CraftMapView");
             craftMapViewWorldMapField = craftMapViewClass.getDeclaredField("worldMap");
-            nmsWorldMapClass = NMSUtils.getNMSClass("net.minecraft.server.%s.WorldMap", "net.minecraft.world.level.saveddata.maps.WorldMap");
+            nmsWorldMapClass = NMSUtils.getNMSClass("net.minecraft.server.%s.WorldMap", "net.minecraft.world.level.saveddata.maps.WorldMap", "net.minecraft.world.level.saveddata.maps.MapItemSavedData");
             nmsWorldMapHumansField = NMSUtils.reflectiveLookup(Field.class,
                     () -> nmsWorldMapClass.getDeclaredField("carriedByPlayers"),
                     () -> nmsWorldMapClass.getDeclaredField("humans"),
                     () -> nmsWorldMapClass.getDeclaredField("o")
             );
-            nmsEntityHumanClass = NMSUtils.getNMSClass("net.minecraft.server.%s.EntityHuman", "net.minecraft.world.entity.player.EntityHuman");
+            nmsEntityHumanClass = NMSUtils.getNMSClass("net.minecraft.server.%s.EntityHuman", "net.minecraft.world.entity.player.EntityHuman", "net.minecraft.world.entity.player.Player");
             nmsEntityHumanGetBukkitEntityMethod = nmsEntityHumanClass.getMethod("getBukkitEntity");
         } catch (ReflectiveOperationException e) {
             e.printStackTrace();
@@ -52,11 +54,21 @@ public class MapUtils {
     }
 
     public static Collection<Player> getTrackedPlayers(MapView mapView) {
+        if (craftMapViewWorldMapField == null || nmsWorldMapHumansField == null || nmsEntityHumanGetBukkitEntityMethod == null) {
+            warnMissingTrackingField();
+            return Collections.emptySet();
+        }
         craftMapViewWorldMapField.setAccessible(true);
         nmsWorldMapHumansField.setAccessible(true);
         try {
             Object nmsWorldMap = craftMapViewWorldMapField.get(mapView);
+            if (nmsWorldMap == null) {
+                return Collections.emptySet();
+            }
             Map<?, ?> nmsEntityHumanMap = (Map<?, ?>) nmsWorldMapHumansField.get(nmsWorldMap);
+            if (nmsEntityHumanMap == null) {
+                return Collections.emptySet();
+            }
             return Collections2.transform(nmsEntityHumanMap.keySet(), nmsEntityHuman -> {
                 try {
                     return (Player) nmsEntityHumanGetBukkitEntityMethod.invoke(nmsEntityHuman, new Object[0]);
@@ -67,6 +79,16 @@ public class MapUtils {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
             return Collections.emptySet();
+        }
+    }
+
+    private static void warnMissingTrackingField() {
+        if (warnedMissingTrackingField) {
+            return;
+        }
+        warnedMissingTrackingField = true;
+        if (GlobalTrackedMaps.plugin != null) {
+            GlobalTrackedMaps.plugin.getLogger().warning("Unable to access Minecraft's map tracking field for this server version. Global map tracking will be disabled instead of throwing repeated errors.");
         }
     }
 
